@@ -1,5 +1,4 @@
 
-
 package painter;
 
 import java.awt.*;
@@ -34,10 +33,6 @@ public class MainWindows extends JFrame{
         this.getContentPane().add(page,BorderLayout.CENTER);    // set the paintpage center
         
         this.setVisible(true);  // use this can be see
-    }
-
-    private Object getContenPage() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }
