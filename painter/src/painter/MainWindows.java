@@ -10,11 +10,12 @@ public class MainWindows extends JFrame{
     Dimension size ;
     ToolBar tbar;
     Page page;
+    Painter parent = null;  // It's a reference to Painter
     
-    
-    MainWindows(String s, Dimension size)
+    MainWindows(Painter p,String s, Dimension size)
     {
         super(s);       // use the Function from JFrame to inputt the title
+        parent = p;
         
         this.size = size;
         this.setSize(size);     // set the size to frame
@@ -26,10 +27,10 @@ public class MainWindows extends JFrame{
         this.getContentPane().setBackground(Color.WHITE);   // set the background color
         this.getContentPane().setLayout(new BorderLayout());    // set this ,and then you can do what you want
         
-        tbar = new ToolBar();
+        tbar = new ToolBar(this);
         this.getContentPane().add(tbar, BorderLayout.NORTH);    // set the toolbar up
         
-        page = new Page();
+        page = new Page(this);
         this.getContentPane().add(page,BorderLayout.CENTER);    // set the paintpage center
         
         this.setVisible(true);  // use this can be see
