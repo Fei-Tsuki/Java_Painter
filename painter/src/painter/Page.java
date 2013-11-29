@@ -14,7 +14,7 @@ public class Page extends JPanel{
         super.paintComponent(pen);          // Get the pen from System
         pen.setPaintMode();                 // Set the Painter Mode
         pen.setColor(Color.black);          // The pen's color is black
-        pen.drawLine(0, 0, 200, 200);       // draw a line (0,0) ~ (200,200)
+        //pen.drawLine(0, 0, 200, 200);       // draw a line (0,0) ~ (200,200)
     }
     
     
