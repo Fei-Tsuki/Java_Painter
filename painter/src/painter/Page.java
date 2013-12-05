@@ -6,6 +6,8 @@ import javax.swing.*;
 
 public class Page extends JPanel{   
     MainWindows parent = null;
+    int x,y;                // set the first  (x,y)
+    boolean fir = true;    // check the start or final
     
     Page(MainWindows p)
     {
@@ -21,11 +23,22 @@ public class Page extends JPanel{
                         {
                             if(parent.parent.drawline)     // check to do
                             {
-                                System.out.println("NOW ( " + e.getX() + " : " + e.getY() + ")");       // print now position
-                                java.awt.Graphics g = Page.this.getGraphics();      // Get the Paint pen
-                                g.setPaintMode();                       // Draw mode
-                                g.setColor(Color.RED);                  // The color of pen is Red
-                                g.drawLine(0, 0, e.getX(), e.getY());   // draw the line from (0,0) ~ (Now x, Now y)
+                                if(Page.this.fir==true)
+                                {
+                                    Page.this.x = e.getX();
+                                    Page.this.y = e.getY();
+                                    Page.this.fir = false;
+                                }
+                                else
+                                {
+                                     //System.out.println("NOW ( " + e.getX() + " : " + e.getY() + ")");       // print now position
+                                    java.awt.Graphics g = Page.this.getGraphics();      // Get the Paint pen
+                                    g.setPaintMode();                       // Draw mode
+                                    g.setColor(Color.RED);                  // The color of pen is Red
+                                    g.drawLine(Page.this.x, Page.this.y, e.getX(), e.getY());   // draw the line from (0,0) ~ (Now x, Now y)
+                                    Page.this.fir = true;
+                                }
+                               
                             }                                                
                         }
               }
