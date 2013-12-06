@@ -1,5 +1,4 @@
 
-
 package painter;
 
 import java.awt.*;
@@ -41,6 +40,7 @@ public class ToolBar extends JPanel{    // JPanel is in the " javax.swing "
                     {
                         public void mouseClicked(MouseEvent e)      // when you click the mouse
                         {
+                            parent.page.fir = true;             // reset the first point
                             parent.parent.drawline = true;     // you can draw
                             ToolBar.this.stopDrawLineBtn.setEnabled(true);  // now stopdrawlinebtn can use
                             ToolBar.this.drawLineBtn.setEnabled(false);     // now drawlinebtn can't use
