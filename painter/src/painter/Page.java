@@ -6,7 +6,9 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.math.*;
 
-public class Page extends JPanel{   
+import java.io.Serializable;
+
+public class Page extends JPanel implements Serializable{   
     MainWindows parent = null;
     Point lp;                   
     Point ep;
@@ -22,7 +24,7 @@ public class Page extends JPanel{
     {
         parent = p;                     // It's a reference to MainWindows
         lp = new Point(-1,-1);          // Set the start point
-        lines = new ArrayList<Line>();  // It's a stack about lines
+        //lines = new ArrayList<Line>();  // It's a stack about lines
         obj = new ArrayList<Object>();
         
         this.setBackground(Color.yellow);   // Set the background of the color is yellow
@@ -38,12 +40,17 @@ public class Page extends JPanel{
                         {    
                             if(lp.x != -1)
                             {
+                                    parent.parent.sharp = parent.parent.sharp.FREE;
                                     java.awt.Graphics g = Page.this.getGraphics();      // Get the Paint pen
                                     g.setPaintMode();                                   // Draw mode
                                     cl = parent.tbar.setPenColorBtn.getBackground();    // remember now pen color
                                     g.setColor(cl);                                     // The color of pen is The btn's backgroundcolor
                                     g.drawLine(lp.x, lp.y , e.getX(), e.getY());        // draw the line from (lp.x , lp.y) ~ (Now x, Now y)
-                                    lines.add(new Line(lp,e.getPoint(),cl));            // push the line into stack
+                                    
+                                    parent.parent.Pencil.add(new Line(lp,e.getPoint(),cl));            // push the line into stack
+                                    parent.parent.UndoStack.push(new StackInfo(parent.parent.sharp,new Line(lp,e.getPoint(),cl)));
+                                    parent.tbar.UndoBtn.setEnabled(true);                       
+                                    parent.tbar.RedoBtn.setEnabled(true);
                             }
                             lp = e.getPoint();              // set the current point
                         }
@@ -65,9 +72,7 @@ public class Page extends JPanel{
               new MouseAdapter ()     // in the java.awt.event , it just a module contain Event
               {                                         
                         public void mousePressed(MouseEvent e)
-                        {
-                            
-                            
+                        {                
                             if(parent.parent.status == Status.Ready2FreeDraw)       // change the state
                                 parent.parent.status = Status.freeDraw;                                                    
                             else if(parent.parent.status == Status.Ready2DrawLine)       // change the state
@@ -79,8 +84,7 @@ public class Page extends JPanel{
                                 lp = e.getPoint();
                             
                             if(parent.parent.status == Status.drawLine)
-                            {
-                                
+                            {                               
                                 if(parent.parent.CorN == true)                       // if we want to continue to drawLine
                                     LineStart = e.getPoint();                       // recode the current start posint
                                 else                                                // this line can change the type with below (*)
@@ -113,7 +117,8 @@ public class Page extends JPanel{
                                     parent.parent.fir = false;                          // this line set false then it could continue to draw (*)
                                 
                                 parent.parent.vLine.add(new Line(LineStart,LineEnd,cl)); 
-                              
+                                parent.parent.UndoStack.push(new StackInfo(parent.parent.sharp,new Line(LineStart,LineEnd,cl)));
+                                parent.tbar.UndoBtn.setEnabled(true);
                             }
                             
                             if(parent.parent.status == Status.creatingOBJ)
@@ -139,6 +144,9 @@ public class Page extends JPanel{
                                 pen.drawRect(lp.x, lp.y,wid,hei);
                                 
                                 parent.parent.obj.add((new Object(lp,wid,hei,cl)));
+                                parent.parent.UndoStack.push(new StackInfo(parent.parent.sharp,new Object(lp,wid,hei,cl)));
+                                parent.tbar.UndoBtn.setEnabled(true);
+                            
                             }
                         }
               }
@@ -151,15 +159,23 @@ public class Page extends JPanel{
         pen.setPaintMode();                 // Set the Painter Mode      
         pen.setColor(parent.tbar.setPenColorBtn.getBackground());          // The pen's color is black
         
-        pen.drawLine(0, 0, 200, 200);       // draw a line (0,0) ~ (200,200)
+        //pen.drawLine(0, 0, 200, 200);       // draw a line (0,0) ~ (200,200)
         
+        if(parent.parent.UndoStack.empty())
+            parent.tbar.UndoBtn.setEnabled(false);
+        else if(parent.parent.RedoStack.empty())
+            parent.tbar.RedoBtn.setEnabled(false);
+
+        
+        /*
         Line temp;
         for(int i = 0; i<lines.size();i++)
         {
             temp = lines.get(i);    
             pen.setColor(temp.color);
             pen.drawLine(temp.start.x, temp.start.y, temp.end.x, temp.end.y);       // draw a line (0,0) ~ (200,200)
-        }
+        }*/
+               
         
         for(int i = 0; i<parent.parent.vLine.size();i++)                        // repaint the line
         {
@@ -169,11 +185,11 @@ public class Page extends JPanel{
             pen.drawLine(temp1.x, temp1.y, temp2.x, temp2.y);
         }
         
-        for(int i = 0; i<parent.parent.vLine.size();i++)                        // repaint the line
+        for(int i = 0; i<parent.parent.Pencil.size();i++)                        // repaint the line
         {
-            Point temp1 = ((Line)parent.parent.vLine.elementAt(i)).getStart();
-            Point temp2 = ((Line)parent.parent.vLine.elementAt(i)).getEnd();
-            pen.setColor(parent.parent.vLine.elementAt(i).getColor());
+            Point temp1 = ((Line)parent.parent.Pencil.elementAt(i)).getStart();
+            Point temp2 = ((Line)parent.parent.Pencil.elementAt(i)).getEnd();
+            pen.setColor(parent.parent.Pencil.elementAt(i).getColor());
             pen.drawLine(temp1.x, temp1.y, temp2.x, temp2.y);
         }
         
@@ -186,16 +202,9 @@ public class Page extends JPanel{
             
             pen.drawRect(temp1.x, temp1.y, wid, hei);
         }
-        
-        if(parent.parent.status == Status.drawLine)                             // repaint the line when you dragged the mouse
+         
+        if(parent.parent.status == Status.creatingOBJ)
         {
-            cl = parent.tbar.setPenColorBtn.getBackground();
-            pen.setColor(cl);
-            pen.drawLine(LineStart.x, LineStart.y, lp.x, lp.y);
-        }  
-        
-         if(parent.parent.status == Status.creatingOBJ)
-         {
             cl = parent.tbar.setPenColorBtn.getBackground();     // remember now pen color
             pen.setColor(cl);                                       // The color of pen is Red
             int wid = Math.abs(ep.x-lp.x);
@@ -211,7 +220,21 @@ public class Page extends JPanel{
                 pen.drawRect(lp.x, lp.y,wid,hei);
             
             
-          }
+        } 
+        
+        if(parent.parent.status == Status.drawLine)                             // repaint the line when you dragged the mouse
+        {
+            cl = parent.tbar.setPenColorBtn.getBackground();
+            pen.setColor(cl);
+            pen.drawLine(LineStart.x, LineStart.y, lp.x, lp.y);
+        }  
+        
+        if((parent.parent.status==Status.undo) || (parent.parent.status==Status.redo))
+        {        
+            parent.parent.status=parent.parent.tempStatus;
+        }
+        
+         
         
     }
     

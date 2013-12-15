@@ -17,7 +17,8 @@ public class ToolBar extends JPanel{    // JPanel is in the " javax.swing "
         JButton setPenColorBtn;         // select the pen color
         JButton DrawRectangleBtn;          // draw the rectangle
         JButton NeworContinue;          // change the type about drawLIne
-        //JButton showColor;
+        JButton UndoBtn;
+        JButton RedoBtn;
         
         
         ToolBar(MainWindows p)
@@ -35,10 +36,9 @@ public class ToolBar extends JPanel{    // JPanel is in the " javax.swing "
             setPenColorBtn = new JButton(" ");
             DrawRectangleBtn = new JButton("DrawRectangle");
             NeworContinue = new JButton("C");
-            //showColor = new JButton(" ");
-            
-                        
-            
+            UndoBtn = new JButton("Undo");
+            RedoBtn = new JButton("Redo");
+          
             setPenColorBtn.setBackground(Color.BLUE);   // original is blue
             setPenColorBtn.setEnabled(false);            // this btn just look
             
@@ -78,7 +78,8 @@ public class ToolBar extends JPanel{    // JPanel is in the " javax.swing "
                         {
                             if(parent.parent.status == Status.idle)
                             {
-                                parent.parent.status = Status.Ready2FreeDraw; 
+                                parent.parent.status = Status.Ready2FreeDraw;
+                                parent.parent.sharp = parent.parent.sharp.FREE;
                                 //parent.parent.status = Status.freeDraw;
                                 ToolBar.this.freeDrawBtn.setEnabled(false);     // now freeDrawbtn can't use
                                 ToolBar.this.drawLineBtn.setEnabled(false);     // now drawlinebtn can't use
@@ -97,6 +98,7 @@ public class ToolBar extends JPanel{    // JPanel is in the " javax.swing "
                             if(parent.parent.status == Status.idle)
                             {
                                 parent.parent.status = Status.Ready2DrawLine;
+                                parent.parent.sharp = parent.parent.sharp.LINE;
                                 parent.page.lp = new Point(-1,-1);      // reset the first point
                                 //parent.parent.status = Status.drawLine;
                                 ToolBar.this.freeDrawBtn.setEnabled(false);     // now freeDrawBtn can't use
@@ -134,6 +136,7 @@ public class ToolBar extends JPanel{    // JPanel is in the " javax.swing "
                             if(parent.parent.status == Status.idle)
                             {
                                 parent.parent.status = Status.Ready2CreatingOBJ;
+                                parent.parent.sharp = parent.parent.sharp.RECT;
                                  ToolBar.this.stopDrawLineBtn.setEnabled(true);     // now drawlinebtn can't use
                                 ToolBar.this.DrawRectangleBtn.setEnabled(false);
                                 ToolBar.this.freeDrawBtn.setEnabled(false);     // now freeDrawbtn can't use
@@ -156,6 +159,74 @@ public class ToolBar extends JPanel{    // JPanel is in the " javax.swing "
                     }
             );
             
+            UndoBtn.addMouseListener(
+                    new MouseAdapter()
+                    {
+                        StackInfo temp;
+                        
+                        public void mouseClicked(MouseEvent e)
+                        {
+                            RedoBtn.setEnabled(true);
+                            parent.parent.tempStatus = parent.parent.status;
+                            parent.parent.status = Status.undo;
+                            if(!parent.parent.UndoStack.empty())
+                            {
+                                temp = (StackInfo)parent.parent.UndoStack.pop();
+                                switch(temp.getType())
+                                {
+                                    case FREE:
+                                        parent.parent.Pencil.remove(parent.parent.Pencil.size()-1);
+                                        break;
+                                    case LINE:
+                                        parent.parent.vLine.remove(parent.parent.vLine.size()-1);
+                                        break;
+                                    case RECT:
+                                        parent.parent.obj.remove(parent.parent.obj.size()-1);
+                                        break;
+                                }
+                                
+                                parent.parent.RedoStack.push(temp);
+                            }
+                            
+                            parent.page.repaint();
+                        }
+                    }
+            );
+            
+            RedoBtn.addMouseListener(
+                new MouseAdapter()
+                {
+                    public void mouseClicked(MouseEvent e)
+                    {
+                        StackInfo temp;        
+                        parent.parent.tempStatus=parent.parent.status;
+                        parent.parent.status=Status.redo;
+                        UndoBtn.setEnabled(true);        
+                        if(!parent.parent.RedoStack.empty())
+                        {
+                            temp = (StackInfo)parent.parent.RedoStack.pop();
+                            switch(temp.getType())
+                            {
+                                case FREE:
+                                    parent.parent.Pencil.add(temp.getLine());
+                                    break;                                                
+                                case LINE:
+                                    parent.parent.vLine.add(temp.getLine());
+                                    break;
+                                case RECT:
+                                    parent.parent.obj.add(temp.getObject());
+                                    break;
+                             }
+                            
+                             parent.parent.UndoStack.push(temp);         
+                        }
+                                        
+                         parent.page.repaint();
+                    }
+                }
+            );
+            
+            
             
             this.stopDrawLineBtn.setEnabled(false);     // set stopdrawlinebtn can't use
             this.add(drawLineBtn);    // add a new Button
@@ -164,7 +235,8 @@ public class ToolBar extends JPanel{    // JPanel is in the " javax.swing "
             this.add(freeDrawBtn);   // add a new Button
             this.add(setPenColorBtn);
             this.add(DrawRectangleBtn);
-            //this.add(showColor);
+            this.add(UndoBtn);
+            this.add(RedoBtn);
             this.add(exitBtn);      // add a new Button
         }
 

@@ -2,8 +2,9 @@
 package painter;
 
 import  java.awt.*;
+import java.io.Serializable;
 
-public class Line {
+public class Line implements Serializable{
     Point start;
     Point end;
     Color color; // = Color.RED;
