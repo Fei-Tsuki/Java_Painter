@@ -6,13 +6,28 @@ import  java.awt.*;
 public class Line {
     Point start;
     Point end;
-    Color color;
+    Color color; // = Color.RED;
     
-    Line(Point s,Point e)
+    Line(Point s,Point e,Color c)
     {
         start = s;
         end = e;
-        color = Color.RED;
+        color = c;
     }        
-         
+    
+    
+    public Color getColor()
+    {
+        return color;
+    }
+    
+    public Point getStart()
+    {
+        return start;
+    }
+    
+    public  Point getEnd()
+    {
+        return end;
+    }
 }
