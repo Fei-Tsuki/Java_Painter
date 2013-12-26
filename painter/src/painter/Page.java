@@ -16,8 +16,8 @@ public class Page extends JPanel implements Serializable{
     Point LineEnd;              // End of Position
     Color cl;
     
-    ArrayList<Line> lines = null;
-    ArrayList<Object> obj = null;
+    //ArrayList<Line> lines = null;
+    //ArrayList<Object> obj = null;
 
     
     Page(MainWindows p)
@@ -25,9 +25,9 @@ public class Page extends JPanel implements Serializable{
         parent = p;                     // It's a reference to MainWindows
         lp = new Point(-1,-1);          // Set the start point
         //lines = new ArrayList<Line>();  // It's a stack about lines
-        obj = new ArrayList<Object>();
+        //obj = new ArrayList<Object>();
         
-        this.setBackground(Color.yellow);   // Set the background of the color is yellow
+        this.setBackground(Color.WHITE);   // Set the background of the color is yellow
         this.setLayout(null);               // Painter_Page don't use the Layout
         
         this.addMouseMotionListener(
@@ -54,6 +54,24 @@ public class Page extends JPanel implements Serializable{
                             }
                             lp = e.getPoint();              // set the current point
                         }
+                        else if(parent.parent.status == Status.eraser)    
+                        {    
+                            if(lp.x != -1)
+                            {
+                                    parent.parent.sharp = parent.parent.sharp.CLR;
+                                    java.awt.Graphics g = Page.this.getGraphics();      // Get the Paint pen
+                                    g.setPaintMode();                                   // Draw mode
+                                    cl = Color.WHITE;    // remember now pen color
+                                    g.setColor(cl);                                     // The color of pen is The btn's backgroundcolor
+                                    g.drawLine(lp.x, lp.y , e.getX(), e.getY());        // draw the line from (lp.x , lp.y) ~ (Now x, Now y)
+                                    
+                                    parent.parent.Eraser.add(new Line(lp,e.getPoint(),cl));            // push the line into stack
+                                    parent.parent.UndoStack.push(new StackInfo(parent.parent.sharp,new Line(lp,e.getPoint(),cl)));
+                                    parent.tbar.UndoBtn.setEnabled(true);                       
+                                    parent.tbar.RedoBtn.setEnabled(true);
+                            }
+                            lp = e.getPoint();              // set the current point
+                        }
                         else if(parent.parent.status == Status.drawLine)
                         {
                             lp = e.getPoint();
@@ -62,7 +80,7 @@ public class Page extends JPanel implements Serializable{
                         else if(parent.parent.status == Status.creatingOBJ)
                         {
                             ep = e.getPoint();                                             
-                            repaint();
+                            Page.this.repaint();
                         }
                     }
                 }
@@ -79,8 +97,14 @@ public class Page extends JPanel implements Serializable{
                                 parent.parent.status = Status.drawLine;                 
                             else if(parent.parent.status == Status.Ready2CreatingOBJ)
                                 parent.parent.status = Status.creatingOBJ;
+                            else if(parent.parent.status == Status.Ready2Eraser)
+                                parent.parent.status = Status.eraser;
+                            
                             
                             if(parent.parent.status == Status.freeDraw)             // recode current position
+                                lp = e.getPoint();
+                            
+                            if(parent.parent.status == Status.eraser)             // recode current position
                                 lp = e.getPoint();
                             
                             if(parent.parent.status == Status.drawLine)
@@ -101,6 +125,11 @@ public class Page extends JPanel implements Serializable{
                             {
                                 // do nothing
                             }    
+                            
+                            if(parent.parent.status == Status.eraser)
+                            {
+                                // do nothing
+                            } 
                             
                             if(parent.parent.status == Status.drawLine)
                             {
@@ -166,16 +195,13 @@ public class Page extends JPanel implements Serializable{
         else if(parent.parent.RedoStack.empty())
             parent.tbar.RedoBtn.setEnabled(false);
 
+         if((parent.parent.status==Status.undo) || (parent.parent.status==Status.redo))
+        {        
+            parent.parent.status=parent.parent.tempStatus;
+        }
         
-        /*
-        Line temp;
-        for(int i = 0; i<lines.size();i++)
-        {
-            temp = lines.get(i);    
-            pen.setColor(temp.color);
-            pen.drawLine(temp.start.x, temp.start.y, temp.end.x, temp.end.y);       // draw a line (0,0) ~ (200,200)
-        }*/
-               
+                     
+/* ============================= repaint ===================================*/   
         
         for(int i = 0; i<parent.parent.vLine.size();i++)                        // repaint the line
         {
@@ -191,7 +217,7 @@ public class Page extends JPanel implements Serializable{
             Point temp2 = ((Line)parent.parent.Pencil.elementAt(i)).getEnd();
             pen.setColor(parent.parent.Pencil.elementAt(i).getColor());
             pen.drawLine(temp1.x, temp1.y, temp2.x, temp2.y);
-        }
+        }      
         
          for(int i = 0; i<parent.parent.obj.size();i++)                        // repaint the line
         {
@@ -202,6 +228,16 @@ public class Page extends JPanel implements Serializable{
             
             pen.drawRect(temp1.x, temp1.y, wid, hei);
         }
+         
+        for(int i = 0; i<parent.parent.Eraser.size();i++)                        // repaint the line
+        {
+            Point temp1 = ((Line)parent.parent.Eraser.elementAt(i)).getStart();
+            Point temp2 = ((Line)parent.parent.Eraser.elementAt(i)).getEnd();
+            pen.setColor(parent.parent.Eraser.elementAt(i).getColor());
+            pen.drawLine(temp1.x, temp1.y, temp2.x, temp2.y);
+        }  
+        
+/*================= When you Drag the mouse , this can repaint the action of moving ===============*/        
          
         if(parent.parent.status == Status.creatingOBJ)
         {
@@ -217,9 +253,7 @@ public class Page extends JPanel implements Serializable{
             else if(ep.y<lp.y)
                 pen.drawRect(lp.x, ep.y,wid,hei);
             else
-                pen.drawRect(lp.x, lp.y,wid,hei);
-            
-            
+                pen.drawRect(lp.x, lp.y,wid,hei);          
         } 
         
         if(parent.parent.status == Status.drawLine)                             // repaint the line when you dragged the mouse
@@ -229,13 +263,5 @@ public class Page extends JPanel implements Serializable{
             pen.drawLine(LineStart.x, LineStart.y, lp.x, lp.y);
         }  
         
-        if((parent.parent.status==Status.undo) || (parent.parent.status==Status.redo))
-        {        
-            parent.parent.status=parent.parent.tempStatus;
-        }
-        
-         
-        
-    }
-    
+    }    
 }
